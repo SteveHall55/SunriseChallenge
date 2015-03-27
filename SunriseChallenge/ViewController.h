@@ -10,5 +10,8 @@
 
 @interface ViewController : UIViewController
 
+@property (nonatomic, strong) NSMutableArray *eventsArray; // of Event objects
+@property (nonatomic, strong) NSMutableArray *daysArray; // of NSDate objects
+
 @end
 

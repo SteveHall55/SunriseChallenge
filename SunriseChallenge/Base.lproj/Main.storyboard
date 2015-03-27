@@ -16,9 +16,9 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <tableView clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" alwaysBounceVertical="YES" dataMode="prototypes" style="grouped" separatorStyle="default" rowHeight="44" sectionHeaderHeight="10" sectionFooterHeight="10" translatesAutoresizingMaskIntoConstraints="NO" id="kHy-bX-oZG" userLabel="Agenda Table View">
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" translatesAutoresizingMaskIntoConstraints="NO" id="kHy-bX-oZG" userLabel="Agenda Table View">
                                 <rect key="frame" x="-5" y="183" width="384" height="483"/>
-                                <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                             </tableView>
                             <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" fixedFrame="YES" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="6zZ-oY-Dsg" userLabel="Calendar View">
                                 <rect key="frame" x="0.0" y="80" width="375" height="103"/>
@@ -90,7 +90,6 @@
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <gestureRecognizers/>
                         <connections>
-                            <outletCollection property="gestureRecognizers" destination="c8d-K7-lrF" appends="YES" id="ecc-1H-fUD"/>
                             <outletCollection property="gestureRecognizers" destination="3yx-la-kFv" appends="YES" id="1lt-dC-ZHj"/>
                         </connections>
                     </view>
@@ -102,14 +101,14 @@
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="x5A-6p-PRh" sceneMemberID="firstResponder"/>
-                <swipeGestureRecognizer direction="up" id="c8d-K7-lrF" userLabel="Swipe Up Gesture Recognizer">
-                    <connections>
-                        <action selector="swipeOnCalendarView:" destination="vXZ-lx-hvc" id="IMF-Zd-QbG"/>
-                    </connections>
-                </swipeGestureRecognizer>
                 <swipeGestureRecognizer direction="down" id="3yx-la-kFv" userLabel="Swipe Down Gesture Recognizer">
                     <connections>
                         <action selector="swipeDownOnCalendarView:" destination="vXZ-lx-hvc" id="HfU-Lt-QId"/>
+                    </connections>
+                </swipeGestureRecognizer>
+                <swipeGestureRecognizer direction="up" id="c8d-K7-lrF" userLabel="Swipe Up Gesture Recognizer">
+                    <connections>
+                        <action selector="swipeUpOnCalendarView:" destination="vXZ-lx-hvc" id="gOo-4m-sLH"/>
                     </connections>
                 </swipeGestureRecognizer>
             </objects>

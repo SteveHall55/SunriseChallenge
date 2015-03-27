@@ -9,6 +9,7 @@
 #import "ViewController.h"
 #import "CalendarCell.h"
 #import "DateUtil.h"
+#import "Event.h"
 
 @interface ViewController () <UICollectionViewDataSource, UICollectionViewDelegate, UITableViewDataSource, UITableViewDelegate>
 
@@ -16,22 +17,125 @@
 @property (weak, nonatomic) IBOutlet UITableView *agendaTableView;
 @property (nonatomic) int year;
 @property (nonatomic) int week;
-@property (nonatomic) int selectedRow;
+@property (strong, nonatomic) NSMutableArray *viewableDatesArray;
+@property (nonatomic) int currentDayIndex;
+@property (nonatomic) int lastAgendaViewDayIndex;
 
 @end
 
 @implementation ViewController
 
+-(void)awakeFromNib
+{
+    self.daysArray =[[NSMutableArray alloc] init];
+}
+
+// Whenever there is a change to the events, we need to update the view
+// For this demo app, this won't happen, but in production app it will
+- (void)setEventsArray:(NSMutableArray *)eventsArray
+{
+    _eventsArray = eventsArray;
+    [self.agendaTableView reloadData];
+}
+
+// As this is a demo, I'm not dealing with the fact that the
+// user could scroll beyond daysArray in either direction
+
+
+// Load the days
+- (void)loadDays
+{
+    // Load a 100 days worth of days
+    // I know that a production app would have to deal with updating
+    // the dates as the user scrolls in either direction
+    NSDate *todaysDate = [NSDate date];
+    todaysDate = [DateUtil updateTimeForDate:todaysDate hour:23 minutes:59 seconds:59];
+    
+    for (int i = -50; i <= 50; i++)
+    {
+        NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+        dayComponent.day = i;
+        
+        // Add "i" days to todaysDate to get the newDate
+        NSDate *newDate = [[NSCalendar currentCalendar] dateByAddingComponents:dayComponent toDate:todaysDate options:0];
+        [self.daysArray addObject:newDate];
+    }
+    
+    // Set the current day index - 50 is today
+    self.currentDayIndex = 50;
+    self.lastAgendaViewDayIndex = 50;
+}
+
+// Load the events
+- (void)loadEvents
+{
+    // Create some hard-coded events for this demo
+    NSDate *todaysDate = [NSDate date];
+    NSMutableArray *hardCodedEventsArray = [[NSMutableArray alloc] init];
+    
+    // Event 1
+    Event *event1 = [[Event alloc] init];
+    event1.eventStartDate = [NSDate date];
+    event1.duration = @"1d";
+    event1.title = @"My Birthday!";
+    event1.eventType = @"Holiday";
+    event1.longDescription = @"Celebrate with family";
+    [hardCodedEventsArray addObject:event1];
+
+    // Event 2
+    Event *event2 = [[Event alloc] init];
+    event2.eventStartDate = [DateUtil updateTimeForDate:todaysDate hour:11 minutes:30 seconds:0];
+    event2.duration = @"1h30m";
+    event2.title = @"Lunch w/ Pierre";
+    event2.eventType = @"Meal";
+    event2.longDescription = @"Lefty O'Douls";
+    [hardCodedEventsArray addObject:event2];
+    
+    // Event 3
+    NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+    dayComponent.day = 1;   // Event 1 day from now
+    NSDate *event3Date = [[NSCalendar currentCalendar] dateByAddingComponents:dayComponent toDate:todaysDate options:0];
+    Event *event3 = [[Event alloc] init];
+    event3.eventStartDate = [DateUtil updateTimeForDate:event3Date hour:14 minutes:30 seconds:0];
+    event3.duration = @"30m";
+    event3.title = @"One-on-on with Scott";
+    event3.eventType = @"Holiday";
+    event3.longDescription = @"Recurring weekly meeting";
+    [hardCodedEventsArray addObject:event3];
+    
+    // Sort the array of events by start Date (just to make sure we have them in the right order)
+    NSArray *sortedEventsArray = [hardCodedEventsArray sortedArrayUsingComparator:^NSComparisonResult(id first, id second)
+    {
+        NSDate *firstDate = [(Event*)first eventStartDate];
+        NSDate *secondDate = [(Event*)second eventStartDate];
+        return [firstDate compare:secondDate];
+    }];
+    self.eventsArray = [NSMutableArray arrayWithArray:sortedEventsArray];
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    
+    // Load the days
+    // As this is a demo, we are only loading 360 days
+    // A production app would need to be dynamic and be sure
+    // to add new days as the user scrolls in each direction
+    [self loadDays];
+    
+    // Load the events
+    // As this is a demo, we are only pulling hard-coded events, but a
+    // production app would need to go out to the network and get the data
+    // and the overhead for all that would need to be handled
+    [self loadEvents];
     
     // Get the current week and year
     self.year = [[DateUtil getCurrentYear]intValue];
     self.week = [[DateUtil getCurrentWeekOfYear]intValue];
     
-    // Initialize the selected row
-    self.selectedRow = -1;
+    // Initialzie the viewableDatesArray
+    self.viewableDatesArray = [[NSMutableArray alloc] init];
+    [self updateViewableDatesArray];
     
     // Set up the calendarView collection view
     self.calendarView.dataSource = self;
@@ -44,6 +148,12 @@
     self.agendaTableView.delegate = self;
     self.agendaTableView.dataSource = self;
     self.agendaTableView.scrollEnabled = YES;
+    self.agendaTableView.contentInset = UIEdgeInsetsMake(-68,0,0,0);
+    
+    // Move the table view to the
+    [self.agendaTableView reloadData];
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:50];
+    [self.agendaTableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionTop animated:NO];
 }
 
 - (void)didReceiveMemoryWarning
@@ -52,18 +162,56 @@
     // Dispose of any resources that can be recreated.
 }
 
-// User swiped on the CalendarView
-- (IBAction)swipeOnCalendarView:(UISwipeGestureRecognizer *)sender
+// Update the viewableDatesArray used in the calendarView
+-(void)updateViewableDatesArray
 {
-    if (sender.direction == UISwipeGestureRecognizerDirectionUp)
+    [self.viewableDatesArray removeAllObjects];
+    
+    // Initially, this will be the first day of the fortnight
+    NSDate *currentDate = [DateUtil getFirstDayOfWeekWithWeekOfYear:self.week usingYear:self.year];
+    [self.viewableDatesArray addObject:currentDate];
+    
+    for (int i = 1; i < 14; i++)
+    {
+        // Add days to the first date (the # is determined by indexPath.row)
+        NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
+        dayComponent.day = 1;   // Add one day
+        currentDate = [[NSCalendar currentCalendar] dateByAddingComponents:dayComponent toDate:currentDate options:0];
+        [self.viewableDatesArray addObject:currentDate];
+    }
+}
+
+// Update the agendaView because the selected date has changed
+-(void)updateAgendaViewBecauseSelectedDateChanged
+{
+    [self.agendaTableView reloadData];
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:self.currentDayIndex];
+    [self.agendaTableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionTop animated:NO];
+}
+
+// Update the calendarView because the selected date has changed
+-(void)updateCalendarViewBecauseSelectedDateChanged
+{
+    // Update calendarView
+    [self updateViewableDatesArray];
+    [self.calendarView reloadData];
+}
+
+// User swiped up on the CalendarView
+- (IBAction)swipeUpOnCalendarView:(id)sender
+{
+    UISwipeGestureRecognizer *swipeGestureRecognizer = sender;
+    if (swipeGestureRecognizer.direction == UISwipeGestureRecognizerDirectionUp)
     {
         [self slideCalendarView:YES];
     }
 }
 
-- (IBAction)swipeDownOnCalendarView:(UISwipeGestureRecognizer *)sender
+// User swiped down on the CalendarView
+- (IBAction)swipeDownOnCalendarView:(id)sender
 {
-    if (sender.direction == UISwipeGestureRecognizerDirectionDown)
+    UISwipeGestureRecognizer *swipeGestureRecognizer = sender;
+    if (swipeGestureRecognizer.direction == UISwipeGestureRecognizerDirectionDown)
     {
         [self slideCalendarView:NO];
     }
@@ -72,6 +220,32 @@
 // Need to "slide" the calendarView based up the direction
 - (void)slideCalendarView:(BOOL)isUpDirection
 {
+    if (isUpDirection)
+    {
+        [self incrementWeek];
+        [self incrementWeek];
+        self.currentDayIndex = self.currentDayIndex + 14;
+    }
+    else    // !isUpDirection
+    {
+        [self decrementWeek];
+        [self decrementWeek];
+        self.currentDayIndex = self.currentDayIndex - 14;
+    }
+    
+    // Update updateViewableDatesArray with the new dates
+    [self updateViewableDatesArray];
+    
+    // Reload calendar view
+    [self.calendarView reloadData];
+    
+    // Update the agendaView because the selected date change
+    [self updateAgendaViewBecauseSelectedDateChanged];
+}
+
+// Increment the current week
+-(void)incrementWeek
+{
     int firstWeekInYear = 1;
     int maxWeeksInYear = 52;
     if (self.year == 2015 || self.year == 2020 || self.year == 2026 || self.year == 2032 || self.year == 2037)
@@ -79,31 +253,26 @@
         maxWeeksInYear = 53;
     }
     
-    if (isUpDirection)
+    if (++self.week > maxWeeksInYear)
     {
-        if (++self.week > maxWeeksInYear)
-        {
-            self.week = firstWeekInYear;
-            self.year ++;
-        }
+        self.week = firstWeekInYear;
+        self.year++;
     }
-    else    // !isUpDirection
+}
+
+// Decrement the current week
+-(void)decrementWeek
+{
+    if (--self.week < 1)
     {
-        if (--self.week < 1)
+        self.year--;
+        int maxWeeksInYear = 52;
+        if (self.year == 2015 || self.year == 2020 || self.year == 2026 || self.year == 2032 || self.year == 2037)
         {
-            self.year--;
-            maxWeeksInYear = 52;
-            if (self.year == 2015 || self.year == 2020 || self.year == 2026 || self.year == 2032 || self.year == 2037)
-            {
-                maxWeeksInYear = 53;
-            }
-            self.week = maxWeeksInYear;
+            maxWeeksInYear = 53;
         }
+        self.week = maxWeeksInYear;
     }
-    
-    // Select the first cell and reload
-    self.selectedRow = 0;
-    [self.calendarView reloadData];
 }
 
 #pragma mark
@@ -125,14 +294,8 @@
 {
     CalendarCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"calendarDayIdentifier" forIndexPath:indexPath];
     
-    // This is the first date to show
-    NSDate *firstDateToShow = [DateUtil getFirstDayOfWeekWithWeekOfYear:self.week usingYear:self.year];
-    
-    // Add days to the first date (the # is determined by indexPath.row)
-    NSDateComponents *dayComponent = [[NSDateComponents alloc] init];
-    dayComponent.day = indexPath.row;
-    NSCalendar *calendar = [NSCalendar currentCalendar];
-    NSDate *currentDateToShow = [calendar dateByAddingComponents:dayComponent toDate:firstDateToShow options:0];
+    // Get the current date to show along with its day and month components
+    NSDate *currentDateToShow = [self.viewableDatesArray objectAtIndex:indexPath.row];
     NSDateComponents *components = [[NSCalendar currentCalendar] components:NSCalendarUnitDay | NSCalendarUnitMonth fromDate:currentDateToShow];
     int day = (int)[components day];
     int month = (int)[components month];
@@ -152,7 +315,7 @@
     }
     
     // Check for "special" cells
-    if (indexPath.row == self.selectedRow)
+    if ([currentDateToShow isEqualToDate:[self.daysArray objectAtIndex:self.currentDayIndex]])
     {
         // Display the blue circle around the selected day
         cell.selectedView.hidden = NO;
@@ -195,27 +358,52 @@
     return 0;
 }
 
-- (UIEdgeInsets)collectionView:(UICollectionView*)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
+- (UIEdgeInsets)collectionView:(UICollectionView*)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section
+{
     return UIEdgeInsetsMake(0, 0, 0, 0); // top, left, bottom, right
 }
 
 // User selected a day from the calendar
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    self.selectedRow = (int)indexPath.row;
-    [collectionView reloadData];
+    self.currentDayIndex = (int)[self.daysArray indexOfObject:[self.viewableDatesArray objectAtIndex:indexPath.row]];
+    
+    // Update the views
+    [self updateAgendaViewBecauseSelectedDateChanged];
 }
 
 #pragma mark - Table view data source
 
+// Number of sections
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    return 4;
+    return [self.daysArray count];
+}
+
+// Section header height is always the same
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 30;
+}
+
+// Display the header (the date)
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+{
+    NSDate *headerDate = [self.daysArray objectAtIndex:section];
+    NSString *headerText = [NSString stringWithFormat:@"     %@", [DateUtil getFormattedDateString:headerDate]];
+    
+    UILabel *headerLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 20)];
+    headerLabel.text = headerText;
+    headerLabel.backgroundColor = [UIColor lightGrayColor];
+    headerLabel.textColor = [UIColor blueColor];
+    headerLabel.font = [UIFont systemFontOfSize:12];
+    
+    return headerLabel;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return 3;
+    return 5;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -223,6 +411,44 @@
     UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:@"VariableHeightCell"];
     
     cell.textLabel.text = @"TESTING";
+    
+   
+    
+    NSArray *visableleRowsIndexPathArray = [NSArray arrayWithArray:[tableView indexPathsForVisibleRows]];
+    NSIndexPath *firstIndexPath = [visableleRowsIndexPathArray firstObject];
+    self.currentDayIndex = (int)firstIndexPath.section;
+    
+    // Update the calendarView because the selected date change
+    if (self.lastAgendaViewDayIndex != self.currentDayIndex)
+    {
+        // Will need to update the week and year if the new selected date is not currently viewable
+        NSDate *selectedDate = [self.daysArray objectAtIndex:self.currentDayIndex];
+        
+        BOOL isDate = NO;
+        for (NSDate *checkDate in self.viewableDatesArray)
+        {
+            if ([selectedDate isEqualToDate:checkDate])
+            {
+                isDate = YES;
+                break;
+            }
+        }
+        // Selected date is not viewable
+        if (!isDate)
+        {
+            // Update the new values of week and year
+            self.week = (int)[DateUtil getWeekOfYearFromDate:selectedDate];
+            self.year = (int)[DateUtil getYearFromDate:selectedDate];
+            
+            // The new day is less than the old one, so we need to go back an additional week
+            if (self.currentDayIndex < self.lastAgendaViewDayIndex)
+            {
+                [self decrementWeek];
+            }
+        }
+        [self updateCalendarViewBecauseSelectedDateChanged];
+        self.lastAgendaViewDayIndex = self.currentDayIndex;
+    }
     
     return cell;
 }
