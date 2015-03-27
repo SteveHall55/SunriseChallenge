@@ -17,6 +17,7 @@
 		F71656C41AC08840001839B4 /* DateUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = F71656BC1AC08840001839B4 /* DateUtil.m */; };
 		F71656C71AC08840001839B4 /* CalendarCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F71656C21AC08840001839B4 /* CalendarCell.m */; };
 		F71656CF1AC219CF001839B4 /* Event.m in Sources */ = {isa = PBXBuildFile; fileRef = F71656CE1AC219CF001839B4 /* Event.m */; };
+		F716570C1AC60BBD001839B4 /* AgendaEventView.m in Sources */ = {isa = PBXBuildFile; fileRef = F716570B1AC60BBD001839B4 /* AgendaEventView.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +50,8 @@
 		F71656C21AC08840001839B4 /* CalendarCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CalendarCell.m; path = SACalendar/CalendarCell.m; sourceTree = "<group>"; };
 		F71656CD1AC219CF001839B4 /* Event.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Event.h; sourceTree = "<group>"; };
 		F71656CE1AC219CF001839B4 /* Event.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Event.m; sourceTree = "<group>"; };
+		F716570A1AC60BBD001839B4 /* AgendaEventView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AgendaEventView.h; sourceTree = "<group>"; };
+		F716570B1AC60BBD001839B4 /* AgendaEventView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AgendaEventView.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -92,6 +95,8 @@
 			children = (
 				F71656BA1AC08840001839B4 /* DateUtil */,
 				F71656D01AC21AD8001839B4 /* Model */,
+				F716570A1AC60BBD001839B4 /* AgendaEventView.h */,
+				F716570B1AC60BBD001839B4 /* AgendaEventView.m */,
 				F71656C11AC08840001839B4 /* CalendarCell.h */,
 				F71656C21AC08840001839B4 /* CalendarCell.m */,
 				F71656791AC08485001839B4 /* ViewController.h */,
@@ -251,6 +256,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F716570C1AC60BBD001839B4 /* AgendaEventView.m in Sources */,
 				F71656CF1AC219CF001839B4 /* Event.m in Sources */,
 				F716567B1AC08485001839B4 /* ViewController.m in Sources */,
 				F71656C41AC08840001839B4 /* DateUtil.m in Sources */,

@@ -10,6 +10,7 @@
 #import "CalendarCell.h"
 #import "DateUtil.h"
 #import "Event.h"
+#import "AgendaEventView.h"
 
 @interface ViewController () <UICollectionViewDataSource, UICollectionViewDelegate, UITableViewDataSource, UITableViewDelegate>
 
@@ -38,16 +39,10 @@
     [self.agendaTableView reloadData];
 }
 
-// As this is a demo, I'm not dealing with the fact that the
-// user could scroll beyond daysArray in either direction
-
-
 // Load the days
 - (void)loadDays
 {
-    // Load a 100 days worth of days
-    // I know that a production app would have to deal with updating
-    // the dates as the user scrolls in either direction
+    // Load a 100 days worth of days to start with
     NSDate *todaysDate = [NSDate date];
     todaysDate = [DateUtil updateTimeForDate:todaysDate hour:23 minutes:59 seconds:59];
     
@@ -75,7 +70,8 @@
     
     // Event 1
     Event *event1 = [[Event alloc] init];
-    event1.eventStartDate = [NSDate date];
+    event1.eventDate = [DateUtil updateTimeForDate:todaysDate hour:23 minutes:59 seconds:59];
+    event1.eventStartDate = [DateUtil updateTimeForDate:todaysDate hour:0 minutes:0 seconds:0];
     event1.duration = @"1d";
     event1.title = @"My Birthday!";
     event1.eventType = @"Holiday";
@@ -84,6 +80,7 @@
 
     // Event 2
     Event *event2 = [[Event alloc] init];
+    event2.eventDate = [DateUtil updateTimeForDate:todaysDate hour:23 minutes:59 seconds:59];
     event2.eventStartDate = [DateUtil updateTimeForDate:todaysDate hour:11 minutes:30 seconds:0];
     event2.duration = @"1h30m";
     event2.title = @"Lunch w/ Pierre";
@@ -96,6 +93,7 @@
     dayComponent.day = 1;   // Event 1 day from now
     NSDate *event3Date = [[NSCalendar currentCalendar] dateByAddingComponents:dayComponent toDate:todaysDate options:0];
     Event *event3 = [[Event alloc] init];
+    event3.eventDate = [DateUtil updateTimeForDate:event3Date hour:23 minutes:59 seconds:59];
     event3.eventStartDate = [DateUtil updateTimeForDate:event3Date hour:14 minutes:30 seconds:0];
     event3.duration = @"30m";
     event3.title = @"One-on-on with Scott";
@@ -383,7 +381,27 @@
 // Section header height is always the same
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    return 30;
+    // This code works but it's really not optimal
+    // I plan on completely rewriting this
+    BOOL bFoundEvent = NO;
+    NSDate *sectionDate = [self.daysArray objectAtIndex:indexPath.section];
+    
+    for (Event *currentEvent in self.eventsArray)
+    {
+        if ([sectionDate isEqualToDate:currentEvent.eventDate])
+        {
+            bFoundEvent = YES;
+        }
+    }
+    
+    if (bFoundEvent)
+    {
+        return 60;
+    }
+    else
+    {
+        return 36;
+    }
 }
 
 // Display the header (the date)
@@ -403,16 +421,60 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return 5;
+    int numberOfRows = 0;
+    
+    NSDate *sectionDate = [self.daysArray objectAtIndex:section];
+    
+    // Return the # of events that match the section date
+    for (Event *currentEvent in self.eventsArray)
+    {
+        if ([sectionDate isEqualToDate:currentEvent.eventDate])
+        {
+            numberOfRows++;
+        }
+    }
+    
+    if (numberOfRows == 0)
+    {
+        numberOfRows = 1;   // Always have at least 1 row to display "No Event"
+    }
+    
+    return numberOfRows;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:@"VariableHeightCell"];
     
-    cell.textLabel.text = @"TESTING";
+    NSDate *sectionDate = [self.daysArray objectAtIndex:indexPath.section];
     
-   
+    // This code will pull the necessary event, but it's really not optimal
+    // I plan on completely rewriting this
+    int numberOfRows = 0;
+    Event *event;
+    for (Event *currentEvent in self.eventsArray)
+    {
+        if ([sectionDate isEqualToDate:currentEvent.eventDate])
+        {
+            event = currentEvent;
+            if (numberOfRows++ == indexPath.row)
+            {
+                break;
+            }
+        }
+    }
+    
+    if (numberOfRows == 0)
+    {
+        cell.textLabel.text = @"No Event";
+    }
+    else
+    {
+        // This view is just a hack right now, I plan on redoing that view
+        AgendaEventView *agendaEventView = [[AgendaEventView alloc] init];
+        [agendaEventView updateView:event];
+        [cell.contentView addSubview:agendaEventView];
+    }
     
     NSArray *visableleRowsIndexPathArray = [NSArray arrayWithArray:[tableView indexPathsForVisibleRows]];
     NSIndexPath *firstIndexPath = [visableleRowsIndexPathArray firstObject];

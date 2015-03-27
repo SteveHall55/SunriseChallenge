@@ -16,6 +16,7 @@
     if (self)
     {
         self.eventStartDate = nil;
+        self.eventDate = nil;;
         self.duration = nil;
         self.title = nil;
         self.eventType = nil;
