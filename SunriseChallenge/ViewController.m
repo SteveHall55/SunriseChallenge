@@ -162,10 +162,14 @@
     self.agendaTableView.scrollEnabled = YES;
     self.agendaTableView.contentInset = UIEdgeInsetsMake(-68,0,0,0);
     
-    // Move the table view to the
+    // Move the table view to the current date
     [self.agendaTableView reloadData];
     NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:50];
     [self.agendaTableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionTop animated:NO];
+    
+    // Add the sunrise image to navigation bar
+    UIImage *sunriseImage = [UIImage imageNamed:@"SunriseIcon"];
+    self.navigationItem.titleView = [[UIImageView alloc] initWithImage:sunriseImage];
 }
 
 - (void)didReceiveMemoryWarning
