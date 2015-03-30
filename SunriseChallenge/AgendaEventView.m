@@ -7,12 +7,15 @@
 //
 
 #import "AgendaEventView.h"
+#import "DateUtil.h"
 
 @interface AgendaEventView()
 
+@property (strong, nonatomic) UILabel *startTimeLabel;
+@property (strong, nonatomic) UILabel *durationLabel;
+@property (strong, nonatomic) UIImageView *eventTypeImageView;
 @property (strong, nonatomic) UILabel *titleLabel;
 @property (strong, nonatomic) UILabel *longDescriptionLabel;
-@property (strong, nonatomic) UILabel *durationLabell;
 
 @end
 
@@ -20,24 +23,49 @@
 
 - (void)updateView:(Event *)event
 {
-    // These labels are just for testing that I'm pulling the data
-    // Not the real implementation
+    // Start time
+    self.startTimeLabel =[[UILabel alloc] initWithFrame:CGRectMake(16, 8, self.frame.size.width - 16, 16)];
+    if (event.isAllDayEvent)
+    {
+        self.startTimeLabel.text = @"ALL DAY";
+    }
+    else
+    {
+        self.startTimeLabel.text = [DateUtil getTimeFromDate:event.eventStartDate];
+    }
+    self.startTimeLabel.font = [UIFont systemFontOfSize:12];
+    self.longDescriptionLabel.textColor = [UIColor blackColor];
+    [self addSubview:self.startTimeLabel];
     
-    self.titleLabel =[[UILabel alloc] initWithFrame:CGRectMake(16, 0, 320, 16)];
+    // Duration
+    self.durationLabel =[[UILabel alloc] initWithFrame:CGRectMake(16, 26, self.frame.size.width - 16, 16)];
+    if (!event.isAllDayEvent)
+    {
+        self.durationLabel.text = event.duration;
+    }
+    self.durationLabel.font = [UIFont systemFontOfSize:12];
+    self.durationLabel.textColor = [UIColor lightGrayColor];
+    [self addSubview:self.durationLabel];
+    
+    // Event type image
+    self.eventTypeImageView = [[UIImageView alloc] initWithFrame:CGRectMake(72, 4, 30, 30)];
+    NSString *eventTypeImageName = [NSString stringWithFormat:@"%@Icon", event.eventType];
+    self.eventTypeImageView.image = [UIImage imageNamed:eventTypeImageName];
+    [self addSubview:self.eventTypeImageView];
+    
+    // Title
+    self.titleLabel =[[UILabel alloc] initWithFrame:CGRectMake(110, 8, self.frame.size.width - 100, 16)];
     self.titleLabel.text = event.title;
-    self.titleLabel.font = [UIFont systemFontOfSize:14];
+    self.titleLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
+    self.titleLabel.textColor = [UIColor blackColor];
+    [self addSubview:self.titleLabel];
     
-    self.longDescriptionLabel =[[UILabel alloc] initWithFrame:CGRectMake(16, 20, 320, 16)];
+    // Long description
+    self.longDescriptionLabel =[[UILabel alloc] initWithFrame:CGRectMake(110, 26, self.frame.size.width - 100, 16)];
     self.longDescriptionLabel.text = event.longDescription;
     self.longDescriptionLabel.font = [UIFont systemFontOfSize:14];
-    
-    self.durationLabell =[[UILabel alloc] initWithFrame:CGRectMake(16, 40, 320, 16)];
-    self.durationLabell.text = event.duration;
-    self.durationLabell.font = [UIFont systemFontOfSize:14];
-    
-    [self addSubview:self.titleLabel];
+    self.longDescriptionLabel.textColor = [UIColor lightGrayColor];
     [self addSubview:self.longDescriptionLabel];
-    [self addSubview:self.durationLabell];
 }
 
 @end

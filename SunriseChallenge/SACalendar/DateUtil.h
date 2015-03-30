@@ -37,6 +37,9 @@
 // Get a nicely formatted date string that we can display in section headers
 +(NSString*)getFormattedDateString:(NSDate *)theDate;
 
+// Get just the time from the date
++(NSString*)getTimeFromDate:(NSDate *)theDate;
+
 // Compares two dates and ignores the time
 +(BOOL)isSameDate:(NSDate*)date1 otherDate:(NSDate*)date2;
 

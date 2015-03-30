@@ -73,19 +73,21 @@
     event1.eventDate = [DateUtil updateTimeForDate:todaysDate hour:23 minutes:59 seconds:59];
     event1.eventStartDate = [DateUtil updateTimeForDate:todaysDate hour:0 minutes:0 seconds:0];
     event1.duration = @"1d";
-    event1.title = @"My Birthday!";
+    event1.title = @"Defender's Day";
+    event1.longDescription = @"United States";
     event1.eventType = @"Holiday";
-    event1.longDescription = @"Celebrate with family";
+    event1.isAllDayEvent = YES;
     [hardCodedEventsArray addObject:event1];
 
     // Event 2
     Event *event2 = [[Event alloc] init];
     event2.eventDate = [DateUtil updateTimeForDate:todaysDate hour:23 minutes:59 seconds:59];
-    event2.eventStartDate = [DateUtil updateTimeForDate:todaysDate hour:11 minutes:30 seconds:0];
-    event2.duration = @"1h30m";
-    event2.title = @"Lunch w/ Pierre";
-    event2.eventType = @"Meal";
-    event2.longDescription = @"Lefty O'Douls";
+    event2.eventStartDate = [DateUtil updateTimeForDate:todaysDate hour:7 minutes:00 seconds:0];
+    event2.duration = @"3h";
+    event2.title = @"Kings of Leon";
+    event2.longDescription = @"Rumsey Playfield, Central Park";
+    event2.eventType = @"Music";
+    event2.isAllDayEvent = NO;
     [hardCodedEventsArray addObject:event2];
     
     // Event 3
@@ -94,12 +96,24 @@
     NSDate *event3Date = [[NSCalendar currentCalendar] dateByAddingComponents:dayComponent toDate:todaysDate options:0];
     Event *event3 = [[Event alloc] init];
     event3.eventDate = [DateUtil updateTimeForDate:event3Date hour:23 minutes:59 seconds:59];
-    event3.eventStartDate = [DateUtil updateTimeForDate:event3Date hour:14 minutes:30 seconds:0];
-    event3.duration = @"30m";
-    event3.title = @"One-on-on with Scott";
-    event3.eventType = @"Holiday";
-    event3.longDescription = @"Recurring weekly meeting";
+    event3.eventStartDate = [DateUtil updateTimeForDate:event3Date hour:19 minutes:30 seconds:0];
+    event3.duration = @"2h30m";
+    event3.title = @"The WAN Show";
+    event3.longDescription = @"http://www.twitch.tv/linustech";
+    event3.eventType = @"TV";
+    event3.isAllDayEvent = NO;
     [hardCodedEventsArray addObject:event3];
+    
+    // Event 4
+    Event *event4 = [[Event alloc] init];
+    event4.eventDate = [DateUtil updateTimeForDate:event3Date hour:23 minutes:59 seconds:59];
+    event4.eventStartDate = [DateUtil updateTimeForDate:event3Date hour:22 minutes:00 seconds:0];
+    event4.duration = @"late";
+    event4.title = @"Peenuttz' nightlife retirement +";
+    event4.longDescription = @"JAKE BAE MOVING TO CHICAGO";
+    event4.eventType = @"Facebook";
+    event4.isAllDayEvent = NO;
+    [hardCodedEventsArray addObject:event4];
     
     // Sort the array of events by start Date (just to make sure we have them in the right order)
     NSArray *sortedEventsArray = [hardCodedEventsArray sortedArrayUsingComparator:^NSComparisonResult(id first, id second)
@@ -246,6 +260,7 @@
 {
     int firstWeekInYear = 1;
     int maxWeeksInYear = 52;
+    // These are the years where there are 53 weeks instead of 52, this code is good until the year 2037!!
     if (self.year == 2015 || self.year == 2020 || self.year == 2026 || self.year == 2032 || self.year == 2037)
     {
         maxWeeksInYear = 53;
@@ -408,9 +423,20 @@
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
 {
     NSDate *headerDate = [self.daysArray objectAtIndex:section];
-    NSString *headerText = [NSString stringWithFormat:@"     %@", [DateUtil getFormattedDateString:headerDate]];
+    NSString *headerText;
     
-    UILabel *headerLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 20)];
+    // Add "TODAY - " to headerText if it's today
+    NSDate *todaysDate = [NSDate date];
+    todaysDate = [DateUtil updateTimeForDate:todaysDate hour:23 minutes:59 seconds:59];
+    if ([headerDate isEqualToDate:todaysDate])
+    {
+        headerText = [NSString stringWithFormat:@"     TODAY - %@", [DateUtil getFormattedDateString:headerDate]];
+    }
+    else
+    {
+        headerText = [NSString stringWithFormat:@"     %@", [DateUtil getFormattedDateString:headerDate]];
+    }
+    UILabel *headerLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, tableView.frame.size.width, 20)];
     headerLabel.text = headerText;
     headerLabel.backgroundColor = [UIColor lightGrayColor];
     headerLabel.textColor = [UIColor blueColor];
@@ -471,7 +497,7 @@
     else
     {
         // This view is just a hack right now, I plan on redoing that view
-        AgendaEventView *agendaEventView = [[AgendaEventView alloc] init];
+        AgendaEventView *agendaEventView = [[AgendaEventView alloc] initWithFrame:CGRectMake(0, 0, cell.frame.size.width, cell.frame.size.height)];
         [agendaEventView updateView:event];
         [cell.contentView addSubview:agendaEventView];
     }

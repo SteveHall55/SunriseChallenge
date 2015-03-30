@@ -113,6 +113,14 @@
     return [NSString stringWithFormat:@"%@, %@ %d", weekdayString, monthString, (int)components.day];
 }
 
++(NSString*)getTimeFromDate:(NSDate *)theDate
+{
+    NSDateFormatter *timeFormatter = [[NSDateFormatter alloc] init];
+    timeFormatter.dateFormat = @"hh:mm a";
+    
+    return [timeFormatter stringFromDate:theDate];
+}
+
 +(BOOL)isSameDate:(NSDate*)date1 otherDate:(NSDate*)date2
 {
     NSCalendar *gregorianCalendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
